@@ -18,10 +18,13 @@ browser-friendly knowledge graph. It answers questions such as:
 - How does the use of named spells change through the series?
 - What is the shortest narrative path between any two entities?
 - Is a connection a one-off accident or a repeated relationship?
+- Which weighted communities emerge, and which high-degree entities hold them together?
+- Is the paragraph context around a relationship mostly positive, neutral, or negative?
 
 The report is intentionally exploratory: search for an entity, toggle entity
-types, raise the minimum encounter threshold, select a node for its profile, or
-select two nodes to compute their shortest path.
+types, filter by encounter count or degree, colour the graph by community,
+select a node for its profile, or select two nodes to compute their shortest
+path.
 
 ## A finding that surprised me
 
@@ -75,8 +78,15 @@ The graph is an adjacency-list-friendly JSON structure:
 An edge means that two entities share a paragraph in at least two separate
 evidence windows. Its `weight` is the number of those windows. This definition
 is intentionally modest: it means “narratively proximal,” not “friends,”
-“speaker,” or “caster.” The UI uses weighted degree for bridge rankings and
-breadth-first search for shortest paths.
+“speaker,” or “caster.” The UI uses weighted degree for bridge rankings,
+one-level Louvain modularity optimisation for communities, and breadth-first
+search for shortest paths.
+
+Relationship sentiment is the average polarity of the paragraphs supporting an
+edge. A deliberately small, inspectable positive/negative lexicon produces a
+score from −1 to +1. This measures **narrative context**, not how one entity
+feels about the other. Existing derived data created before this feature shows
+`not calculated` until regenerated from the source corpus.
 
 ## Run it
 
@@ -120,6 +130,7 @@ fast, deterministic, auditable, offline, and easy to discuss.
 | Paragraph co-occurrence | Usually captures one local event | Misses cross-paragraph relations |
 | Minimum of two shared paragraphs | Suppresses incidental edges | Removes genuine one-off meetings |
 | Curated entity inventory | Entity types are reliable | Long-tail entities are missed |
+| Lexicon sentiment | Fast and explainable | Misses negation, irony, and implicit emotion |
 
 ### Expected quality
 
@@ -139,6 +150,8 @@ current take-home avoids inventing metrics without a labelled gold set.
 - A paragraph mentioning two entities does not prove direct interaction.
 - Ambiguous aliases can attach a mention to the wrong canonical entity.
 - Spell effects are curated metadata, not inferred from nearby prose.
+- Sentiment describes shared paragraph context, not directed interpersonal emotion.
+- The lightweight sentiment lexicon does not understand negation or sarcasm.
 - The gazetteer favors important recurring entities over exhaustive recall.
 - Different book editions and encodings can change paragraph boundaries.
 

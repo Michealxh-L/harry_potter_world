@@ -89,6 +89,19 @@ SPELL_EFFECTS = {
     "Sectumsempra": "causes deep cuts", "Protego": "creates a magical shield",
 }
 
+POSITIVE_WORDS = {
+    "admire", "brave", "calm", "celebrate", "cheer", "comfort", "delight",
+    "excellent", "friend", "gentle", "glad", "good", "happy", "help", "hope",
+    "kind", "laugh", "love", "loyal", "peace", "pleased", "proud", "relief",
+    "safe", "smile", "trust", "wonderful",
+}
+NEGATIVE_WORDS = {
+    "afraid", "angry", "attack", "cruel", "curse", "danger", "dark", "dead",
+    "death", "despair", "evil", "fear", "furious", "hate", "horrible", "hurt",
+    "kill", "murder", "pain", "panic", "scream", "terrible", "threat", "torture",
+    "ugly", "weep", "wicked", "worry", "worse",
+}
+
 def clean_text(raw: bytes) -> str:
     text = raw.decode("utf-8", errors="replace")
     if text.count("�") > 100:
@@ -116,6 +129,54 @@ def pattern_for(aliases: list[str]) -> re.Pattern:
     options = "|".join(re.escape(a) for a in sorted(aliases, key=len, reverse=True))
     return re.compile(rf"(?<![\w-])(?:{options})(?![\w-])", re.I)
 
+def sentiment_score(text: str) -> float:
+    """Return a transparent lexicon polarity in [-1, 1] for one evidence window."""
+    words = re.findall(r"[A-Za-z]+", text.lower())
+    positive = sum(word in POSITIVE_WORDS for word in words)
+    negative = sum(word in NEGATIVE_WORDS for word in words)
+    return (positive - negative) / max(1, positive + negative)
+
+def add_graph_metrics(nodes: list[dict], edges: list[dict]) -> None:
+    """Add degree metrics and deterministic one-level Louvain communities."""
+    adjacency = defaultdict(dict)
+    for edge in edges:
+        adjacency[edge["source"]][edge["target"]] = edge["weight"]
+        adjacency[edge["target"]][edge["source"]] = edge["weight"]
+    labels = {node["id"]: node["id"] for node in nodes}
+    weighted_degrees = {node_id: sum(neighbours.values()) for node_id, neighbours in adjacency.items()}
+    totals = dict(weighted_degrees)
+    twice_total_weight = sum(weighted_degrees.values())
+    for _ in range(30):
+        changed = False
+        for node_id in sorted(labels):
+            node_degree = weighted_degrees.get(node_id, 0)
+            if not node_degree:
+                continue
+            old_label = labels[node_id]
+            totals[old_label] -= node_degree
+            weights_by_community = Counter()
+            for neighbour, weight in adjacency[node_id].items():
+                weights_by_community[labels[neighbour]] += weight
+            best_label, best_gain = old_label, 0.0
+            for label, internal_weight in sorted(weights_by_community.items()):
+                gain = internal_weight - totals.get(label, 0) * node_degree / twice_total_weight
+                if gain > best_gain + 1e-12:
+                    best_label, best_gain = label, gain
+            labels[node_id] = best_label
+            totals[best_label] = totals.get(best_label, 0) + node_degree
+            changed |= best_label != old_label
+        if not changed:
+            break
+    communities = {
+        label: index for index, label in enumerate(
+            sorted(set(labels.values()), key=lambda x: (-sum(v == x for v in labels.values()), x)), 1
+        )
+    }
+    for node in nodes:
+        node["degree"] = len(adjacency[node["id"]])
+        node["weightedDegree"] = sum(adjacency[node["id"]].values())
+        node["community"] = communities[labels[node["id"]]]
+
 def extract(text: str) -> dict:
     books = split_books(text)
     if len(books) < 5:
@@ -124,6 +185,7 @@ def extract(text: str) -> dict:
     entity_type = {name: kind for kind, group in ENTITIES.items() for name in group}
     mentions, book_counts, first_seen = Counter(), defaultdict(Counter), {}
     edge_counts, edge_books = Counter(), defaultdict(Counter)
+    edge_sentiment, edge_sentiment_samples = Counter(), Counter()
 
     for book_index, (book, body) in enumerate(books, 1):
         for paragraph in re.split(r"\n\s*\n|\n", body):
@@ -139,11 +201,14 @@ def extract(text: str) -> dict:
                     first_seen.setdefault(name, {"book": book, "bookIndex": book_index})
             # paragraph co-occurrence: interpretable, bounded, and symmetric
             present = sorted(set(present))
+            paragraph_sentiment = sentiment_score(paragraph)
             for i, source in enumerate(present):
                 for target in present[i + 1:]:
                     key = (source, target)
                     edge_counts[key] += 1
                     edge_books[key][book] += 1
+                    edge_sentiment[key] += paragraph_sentiment
+                    edge_sentiment_samples[key] += 1
 
     nodes = []
     for name, count in mentions.most_common():
@@ -152,21 +217,29 @@ def extract(text: str) -> dict:
         if name in SPELL_EFFECTS:
             node["effect"] = SPELL_EFFECTS[name]
         nodes.append(node)
-    edges = [{"source": a, "target": b, "weight": weight, "relation": "CO_OCCURS",
-              "books": dict(edge_books[(a, b)]),
-              "confidence": round(min(.99, .55 + .08 * weight), 2)}
-             for (a, b), weight in edge_counts.most_common() if weight >= 2]
-
-    degree = Counter()
-    for edge in edges:
-        degree[edge["source"]] += edge["weight"]
-        degree[edge["target"]] += edge["weight"]
-    for node in nodes:
-        node["weightedDegree"] = degree[node["id"]]
+    edges = []
+    for (a, b), weight in edge_counts.most_common():
+        if weight < 2:
+            continue
+        score = edge_sentiment[(a, b)] / edge_sentiment_samples[(a, b)]
+        edges.append({
+            "source": a, "target": b, "weight": weight, "relation": "CO_OCCURS",
+            "books": dict(edge_books[(a, b)]),
+            "confidence": round(min(.99, .55 + .08 * weight), 2),
+            "sentiment": {
+                "score": round(score, 3),
+                "label": "positive" if score > .12 else "negative" if score < -.12 else "neutral",
+                "samples": edge_sentiment_samples[(a, b)],
+                "method": "paragraph lexicon polarity",
+            },
+        })
+    add_graph_metrics(nodes, edges)
     return {
         "meta": {"books": [b[0] for b in books], "bookCount": len(books),
                  "entityCount": len(nodes), "relationCount": len(edges),
+                 "communityCount": len({node["community"] for node in nodes}),
                  "method": "case-insensitive gazetteer matching + paragraph co-occurrence",
+                 "sentimentMethod": "transparent positive/negative word lexicon over evidence paragraphs",
                  "generatedFrom": "user-supplied local corpus"},
         "nodes": nodes, "edges": edges,
     }
@@ -183,4 +256,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

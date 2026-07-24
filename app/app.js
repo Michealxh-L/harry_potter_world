@@ -1,4 +1,5 @@
 const COLORS={character:"#a43a32",place:"#416b7d",spell:"#c99b45",creature:"#52715b",object:"#755d83"};
+const COMMUNITY_COLORS=["#a43a32","#416b7d","#c99b45","#52715b","#755d83","#c46b3c","#508b8b","#96713e"];
 const shortBook=t=>({"Philosopher's Stone":"PS","Chamber of Secrets":"CS","Prisoner of Azkaban":"PA","Goblet of Fire":"GF","Order of the Phoenix":"OP","Half-Blood Prince":"HBP","Deathly Hallows":"DH"}[t]);
 let data, visibleNodes=[], visibleEdges=[], selected=[], scale=1, pan={x:0,y:0}, drag=null, hovered=null;
 const canvas=document.querySelector("#graph"),ctx=canvas.getContext("2d"), filters={};
@@ -22,11 +23,12 @@ function computeLayout(){
   }));
 }
 function update(){
-  const min=+document.querySelector("#weight").value, query=document.querySelector("#search").value.toLowerCase();
-  visibleNodes=data.nodes.filter(n=>filters[n.type]&&(!query||n.id.toLowerCase().includes(query)));
+  const min=+document.querySelector("#weight").value, minDegree=+document.querySelector("#degree").value;
+  const query=document.querySelector("#search").value.toLowerCase();
+  visibleNodes=data.nodes.filter(n=>filters[n.type]&&(n.degree||0)>=minDegree&&(!query||n.id.toLowerCase().includes(query)));
   let ids=new Set(visibleNodes.map(n=>n.id));
   visibleEdges=data.edges.filter(e=>e.weight>=min&&ids.has(e.source)&&ids.has(e.target));
-  if(!query){ids=new Set(visibleEdges.flatMap(e=>[e.source,e.target]));visibleNodes=data.nodes.filter(n=>filters[n.type]&&ids.has(n.id))}
+  if(!query){ids=new Set(visibleEdges.flatMap(e=>[e.source,e.target]));visibleNodes=data.nodes.filter(n=>filters[n.type]&&(n.degree||0)>=minDegree&&ids.has(n.id))}
   document.querySelector("#empty").style.display=visibleNodes.length?"none":"block"; draw();
 }
 function resize(){
@@ -40,12 +42,13 @@ function resize(){
 function screen(n){const r=canvas.getBoundingClientRect();return{x:(n.x-450)*scale+r.width/2+pan.x,y:(n.y-300)*scale+r.height/2+pan.y}}
 function draw(){
   resize(); const selectedIds=new Set(selected.map(n=>n.id)), pathIds=new Set(window.pathIds||[]);
+  const communityMode=document.querySelector("#community-mode").checked;
   ctx.clearRect(0,0,canvas.width,canvas.height); ctx.lineCap="round";
   visibleEdges.forEach(e=>{const a=data.nodes.find(n=>n.id===e.source),b=data.nodes.find(n=>n.id===e.target),p=screen(a),q=screen(b);
     const active=(selectedIds.has(a.id)||selectedIds.has(b.id)),onPath=pathIds.has(a.id)&&pathIds.has(b.id);
     ctx.strokeStyle=onPath?"#c99b45":active?"#a43a3277":"#8a887a28";ctx.lineWidth=onPath?3:Math.min(4,.3+Math.sqrt(e.weight)*.25);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()});
   visibleNodes.forEach(n=>{const p=screen(n),radius=Math.max(3,Math.min(12,2+Math.sqrt(n.mentions)*.14))*Math.sqrt(scale);
-    ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.fillStyle=COLORS[n.type];ctx.fill();
+    ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.fillStyle=communityMode?COMMUNITY_COLORS[(n.community-1)%COMMUNITY_COLORS.length]:COLORS[n.type];ctx.fill();
     if(selectedIds.has(n.id)||pathIds.has(n.id)){ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke()}
     if(radius>6||n===hovered||selectedIds.has(n.id)){ctx.font=`${n===hovered?600:500} 10px Manrope`;ctx.fillStyle="#25251f";ctx.fillText(n.id,p.x+radius+4,p.y+3)}
   });
@@ -58,7 +61,7 @@ canvas.onwheel=e=>{e.preventDefault();scale=Math.max(.45,Math.min(2.5,scale*(e.d
 function selectNode(n){if(selected[0]?.id===n.id)selected=[];else if(selected.length<2)selected.push(n);else selected=[n];renderDetail(n);if(selected.length===2)findPath();else{window.pathIds=[];document.querySelector("#path-result").textContent=""}draw()}
 function renderDetail(n){
  const edges=data.edges.filter(e=>e.source===n.id||e.target===n.id).sort((a,b)=>b.weight-a.weight).slice(0,5),max=Math.max(...Object.values(n.books));
- document.querySelector("#detail").innerHTML=`<p class="eyebrow">Entity profile</p><span class="detail-type" style="color:${COLORS[n.type]}">${n.type}</span><h3>${n.id}</h3>${n.effect?`<p>${n.effect}</p>`:""}<div class="big-number">${n.mentions.toLocaleString()}</div><div class="big-label">total mentions</div><h4>Across the series</h4>${data.meta.books.map(b=>`<div class="book-row"><div><span>${shortBook(b)}</span><b>${n.books[b]||0}</b></div><i style="width:${(n.books[b]||0)/max*100}%"></i></div>`).join("")}<h4>Strongest links</h4><div class="connections">${edges.map(e=>`<div class="connection"><span>${e.source===n.id?e.target:e.source}</span><b>${e.weight}</b></div>`).join("")}</div>`;
+ document.querySelector("#detail").innerHTML=`<p class="eyebrow">Entity profile</p><span class="detail-type" style="color:${COLORS[n.type]}">${n.type} · community ${n.community}</span><h3>${n.id}</h3>${n.effect?`<p>${n.effect}</p>`:""}<div class="big-number">${n.mentions.toLocaleString()}</div><div class="big-label">mentions · degree ${n.degree}</div><h4>Across the series</h4>${data.meta.books.map(b=>`<div class="book-row"><div><span>${shortBook(b)}</span><b>${n.books[b]||0}</b></div><i style="width:${(n.books[b]||0)/max*100}%"></i></div>`).join("")}<h4>Strongest links</h4><div class="connections">${edges.map(e=>{const sentiment=e.sentiment?.label||"not calculated";return `<div class="connection"><span>${e.source===n.id?e.target:e.source}</span><span class="sentiment ${sentiment.replace(" ","-")}">${sentiment}</span><b>${e.weight}</b></div>`}).join("")}</div>`;
 }
 function findPath(){
  const [start,end]=selected.map(n=>n.id), adjacency={};visibleNodes.forEach(n=>adjacency[n.id]=[]);
@@ -80,6 +83,8 @@ function buildInsights(){
  document.querySelector("#show-pair").onclick=()=>{selected=pair.map(id=>data.nodes.find(n=>n.id===id));filters.character=true;document.querySelectorAll("[data-type]").forEach(x=>{x.checked=true;filters[x.dataset.type]=true});document.querySelector("#search").value="";update();findPath();renderDetail(selected[1]);location.hash="explore"};
 }
 document.querySelector("#search").oninput=update;document.querySelector("#weight").oninput=e=>{document.querySelector("#weight-output").textContent=e.target.value;selected=[];update()};
+document.querySelector("#degree").oninput=e=>{document.querySelector("#degree-output").textContent=e.target.value;selected=[];update()};
+document.querySelector("#community-mode").onchange=draw;
 document.querySelector("#all-types").onclick=()=>{document.querySelectorAll("[data-type]").forEach(x=>x.checked=filters[x.dataset.type]=true);update()};
 document.querySelector("#reset").onclick=()=>{scale=1;pan={x:0,y:0};selected=[];window.pathIds=[];update()};
 document.querySelector("#zoom-in").onclick=()=>{scale=Math.min(2.5,scale*1.2);draw()};document.querySelector("#zoom-out").onclick=()=>{scale=Math.max(.45,scale*.8);draw()};
