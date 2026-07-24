@@ -89,25 +89,26 @@ increase distances or disconnect nodes. The community legend names each
 Louvain community using its two highest-weighted-degree representatives; those
 names are descriptive labels, not manually assigned Hogwarts houses.
 
-Relationship sentiment is the average polarity of the paragraphs supporting an
-edge. A deliberately small, inspectable positive/negative lexicon produces a
-score from −1 to +1. This measures **narrative context**, not how one entity
-feels about the other. In the committed extraction, all 642 relations have been
-calculated: 121 are positive, 347 neutral, and 174 negative. The mean context
-score is −0.03.
+Relationship sentiment is the average
+[VADER](https://github.com/cjhutto/vaderSentiment) compound polarity of the
+paragraphs supporting an edge. VADER combines a sentiment lexicon with rules
+for negation, intensifiers, punctuation, and capitalisation, producing a score
+from −1 to +1. This measures **narrative context**, not how one entity feels
+about the other.
 
-For each evidence paragraph, the code tokenises alphabetic words and calculates:
+For each relation, the code calculates:
 
 ```text
-paragraph polarity = (positive word count − negative word count)
-                     / max(1, positive word count + negative word count)
-
-relation sentiment = mean polarity across all paragraphs supporting that edge
+relation sentiment = mean(
+    VADER compound score(paragraph)
+    for every paragraph supporting the edge
+)
 ```
 
-Scores above `0.12` are labelled positive, scores below `−0.12` negative, and
-the remainder neutral. The word lists and implementation are directly
-inspectable in `scripts/extract_graph.py`.
+Following VADER's standard thresholds, scores at or above `0.05` are positive,
+scores at or below `−0.05` negative, and the remainder neutral.
+In the committed extraction, all 642 relations are scored: 264 positive, 151
+neutral, and 227 negative. The mean compound context score is `0.011`.
 
 ## Run it
 
@@ -153,7 +154,7 @@ fast, deterministic, auditable, offline, and easy to discuss.
 | Paragraph co-occurrence | Usually captures one local event | Misses cross-paragraph relations |
 | Minimum of two shared paragraphs | Suppresses incidental edges | Removes genuine one-off meetings |
 | Curated entity inventory | Entity types are reliable | Long-tail entities are missed |
-| Lexicon sentiment | Fast and explainable | Misses negation, irony, and implicit emotion |
+| VADER sentiment | Fast; handles negation and emphasis | Trained for social text, not literary prose |
 
 ### Expected quality
 
@@ -174,7 +175,7 @@ current take-home avoids inventing metrics without a labelled gold set.
 - Ambiguous aliases can attach a mention to the wrong canonical entity.
 - Spell effects are curated metadata, not inferred from nearby prose.
 - Sentiment describes shared paragraph context, not directed interpersonal emotion.
-- The lightweight sentiment lexicon does not understand negation or sarcasm.
+- VADER handles simple negation but not narrative irony, viewpoint, or sarcasm reliably.
 - The gazetteer favors important recurring entities over exhaustive recall.
 - Different book editions and encodings can change paragraph boundaries.
 

@@ -1,3 +1,4 @@
 # Runtime extraction uses only the Python standard library.
 # pytest is used for the automated test suite.
 pytest==8.3.5
+vaderSentiment==3.3.2

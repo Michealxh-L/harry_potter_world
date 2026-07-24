@@ -8,6 +8,8 @@ import re
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
 BOOK_MARKERS = [
     ("Philosopher's Stone", r"(?:Sorcerer|Philosopher)'s Stone"),
     ("Chamber of Secrets", r"Chamber of Secrets"),
@@ -89,18 +91,7 @@ SPELL_EFFECTS = {
     "Sectumsempra": "causes deep cuts", "Protego": "creates a magical shield",
 }
 
-POSITIVE_WORDS = {
-    "admire", "brave", "calm", "celebrate", "cheer", "comfort", "delight",
-    "excellent", "friend", "gentle", "glad", "good", "happy", "help", "hope",
-    "kind", "laugh", "love", "loyal", "peace", "pleased", "proud", "relief",
-    "safe", "smile", "trust", "wonderful",
-}
-NEGATIVE_WORDS = {
-    "afraid", "angry", "attack", "cruel", "curse", "danger", "dark", "dead",
-    "death", "despair", "evil", "fear", "furious", "hate", "horrible", "hurt",
-    "kill", "murder", "pain", "panic", "scream", "terrible", "threat", "torture",
-    "ugly", "weep", "wicked", "worry", "worse",
-}
+SENTIMENT_ANALYSER = SentimentIntensityAnalyzer()
 
 def clean_text(raw: bytes) -> str:
     text = raw.decode("utf-8", errors="replace")
@@ -130,11 +121,8 @@ def pattern_for(aliases: list[str]) -> re.Pattern:
     return re.compile(rf"(?<![\w-])(?:{options})(?![\w-])", re.I)
 
 def sentiment_score(text: str) -> float:
-    """Return a transparent lexicon polarity in [-1, 1] for one evidence window."""
-    words = re.findall(r"[A-Za-z]+", text.lower())
-    positive = sum(word in POSITIVE_WORDS for word in words)
-    negative = sum(word in NEGATIVE_WORDS for word in words)
-    return (positive - negative) / max(1, positive + negative)
+    """Return VADER's normalised compound polarity in [-1, 1]."""
+    return SENTIMENT_ANALYSER.polarity_scores(text)["compound"]
 
 def add_graph_metrics(nodes: list[dict], edges: list[dict]) -> None:
     """Add degree metrics and deterministic one-level Louvain communities."""
@@ -228,9 +216,9 @@ def extract(text: str) -> dict:
             "confidence": round(min(.99, .55 + .08 * weight), 2),
             "sentiment": {
                 "score": round(score, 3),
-                "label": "positive" if score > .12 else "negative" if score < -.12 else "neutral",
+                "label": "positive" if score >= .05 else "negative" if score <= -.05 else "neutral",
                 "samples": edge_sentiment_samples[(a, b)],
-                "method": "paragraph lexicon polarity",
+                "method": "VADER compound score averaged over evidence paragraphs",
             },
         })
     add_graph_metrics(nodes, edges)
@@ -239,7 +227,7 @@ def extract(text: str) -> dict:
                  "entityCount": len(nodes), "relationCount": len(edges),
                  "communityCount": len({node["community"] for node in nodes}),
                  "method": "case-insensitive gazetteer matching + paragraph co-occurrence",
-                 "sentimentMethod": "transparent positive/negative word lexicon over evidence paragraphs",
+                 "sentimentMethod": "VADER 3.3.2 compound score over evidence paragraphs",
                  "generatedFrom": "user-supplied local corpus"},
         "nodes": nodes, "edges": edges,
     }
