@@ -96,6 +96,19 @@ feels about the other. In the committed extraction, all 642 relations have been
 calculated: 121 are positive, 347 neutral, and 174 negative. The mean context
 score is −0.03.
 
+For each evidence paragraph, the code tokenises alphabetic words and calculates:
+
+```text
+paragraph polarity = (positive word count − negative word count)
+                     / max(1, positive word count + negative word count)
+
+relation sentiment = mean polarity across all paragraphs supporting that edge
+```
+
+Scores above `0.12` are labelled positive, scores below `−0.12` negative, and
+the remainder neutral. The word lists and implementation are directly
+inspectable in `scripts/extract_graph.py`.
+
 ## Run it
 
 The committed report has no build step or runtime dependencies:
@@ -118,6 +131,8 @@ python -m http.server 8000
 The input may contain all seven books concatenated in publication order, with
 standard `Harry Potter and the …` title lines. The source corpus is deliberately
 gitignored: the repository distributes derived facts, not copyrighted prose.
+The [source-data manifest](data/SOURCE.md) records its checksum, dimensions,
+reproduction instructions, and public derived fields.
 
 Run the lightweight checks with:
 
