@@ -88,13 +88,19 @@
           <div id="bridge-bars" class="bars"></div>
         </article>
         <article>
-          <span class="number">02</span><p class="tag">Spell signature</p>
-          <h3>The story’s spell vocabulary matures with Harry.</h3>
-          <p id="spell-copy">Early practical charms give way to defensive and unforgivable magic as the stakes rise.</p>
-          <div id="spell-chart" class="spark-chart"></div>
+          <span class="number">02</span><p class="tag">Community structure</p>
+          <h3 id="community-title">Detecting narrative communities…</h3>
+          <p id="community-copy"></p>
+          <div id="community-bars" class="bars"></div>
         </article>
         <article>
-          <span class="number">03</span><p class="tag">Hidden proximity</p>
+          <span class="number">03</span><p class="tag">Emotional context</p>
+          <h3 id="sentiment-title">Reading the emotional temperature…</h3>
+          <p id="sentiment-copy"></p>
+          <div id="sentiment-bars" class="bars sentiment-bars"></div>
+        </article>
+        <article>
+          <span class="number">04</span><p class="tag">Hidden proximity</p>
           <h3 id="pair-title">Finding an unexpected connection…</h3>
           <p id="pair-copy"></p>
           <button id="show-pair">Show in graph →</button>
@@ -105,10 +111,10 @@
     <section id="method" class="method">
       <div><p class="eyebrow">03 / Method</p><h2>Simple enough to trust.</h2></div>
       <div class="method-steps">
-        <article><b>1</b><h3>Segment</h3><p>Detect book boundaries and scan paragraph-sized evidence windows.</p></article>
-        <article><b>2</b><h3>Recognise</h3><p>Match an auditable gazetteer with aliases and strict word boundaries.</p></article>
-        <article><b>3</b><h3>Connect</h3><p>Create a weighted edge when two entities share a paragraph at least twice.</p></article>
-        <article><b>4</b><h3>Interrogate</h3><p>Detect communities, filter by degree, inspect sentiment and traverse shortest paths.</p></article>
+        <article><b>1</b><h3>Segment</h3><p>Clean the local corpus, detect seven book boundaries, and preserve paragraph-sized evidence windows.</p></article>
+        <article><b>2</b><h3>Recognise</h3><p>Resolve aliases with a typed, auditable gazetteer and strict word boundaries.</p></article>
+        <article><b>3</b><h3>Enrich</h3><p>Connect repeated co-occurrences and average VADER compound sentiment over their evidence paragraphs.</p></article>
+        <article><b>4</b><h3>Interrogate</h3><p>Calculate degree and Louvain communities, then explore filters, hop distance and shortest paths.</p></article>
       </div>
       <p class="method-note">Transparent by design. Every weight can be reproduced from the local corpus; limitations and evaluation are documented in the README.</p>
     </section>

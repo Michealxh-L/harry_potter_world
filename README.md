@@ -35,10 +35,12 @@ graph exposes it: Hogwarts is not merely a setting. Paragraph by paragraph, it
 is the piece of narrative infrastructure that joins teachers, pupils, objects,
 creatures, and magic that would otherwise form separate clusters.
 
-The spell timeline reveals a second pattern: spell mentions are comparatively
-sparse early in the series and become much denser as the conflict escalates.
-The report lets the reader verify both claims rather than asking them to trust a
-static chart.
+Community detection reveals a second pattern: one dense cluster gathers the
+central school-age cast, while the Dumbledore–Voldemort axis and the Weasley
+family form distinct narrative neighbourhoods. VADER also finds the complete
+relationship network almost emotionally balanced, with a mean context score of
+only `0.011`, despite the series’ increasingly dark conflict. The report lets
+the reader verify these claims rather than asking them to trust a static chart.
 
 ## How it works
 
