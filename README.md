@@ -92,8 +92,9 @@ names are descriptive labels, not manually assigned Hogwarts houses.
 Relationship sentiment is the average polarity of the paragraphs supporting an
 edge. A deliberately small, inspectable positive/negative lexicon produces a
 score from −1 to +1. This measures **narrative context**, not how one entity
-feels about the other. Existing derived data created before this feature shows
-`not calculated` until regenerated from the source corpus.
+feels about the other. In the committed extraction, all 642 relations have been
+calculated: 121 are positive, 347 neutral, and 174 negative. The mean context
+score is −0.03.
 
 ## Run it
 
