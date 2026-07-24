@@ -1,6 +1,8 @@
 import unittest
 
-from scripts.extract_graph import add_graph_metrics, clean_text, pattern_for, sentiment_score
+from scripts.extract_graph import (
+    add_graph_metrics, clean_text, dialogue_attributions, pattern_for, sentiment_score
+)
 
 class ExtractTests(unittest.TestCase):
     def test_alias_boundaries_do_not_match_inside_words(self):
@@ -21,6 +23,14 @@ class ExtractTests(unittest.TestCase):
         add_graph_metrics(nodes, edges)
         self.assertEqual(nodes[1]["degree"], 2)
         self.assertTrue(all("community" in node for node in nodes))
+
+    def test_dialogue_attribution(self):
+        aliases = {"Harry Potter": ["Harry Potter", "Harry"],
+                   "Hermione Granger": ["Hermione Granger", "Hermione"]}
+        paragraph = '"That was kind of you," said Hermione. "Thanks," Harry replied.'
+        self.assertEqual(dialogue_attributions(paragraph, aliases),
+                         [("Hermione Granger", "That was kind of you,"),
+                          ("Harry Potter", "Thanks,")])
 
 if __name__ == "__main__":
     unittest.main()

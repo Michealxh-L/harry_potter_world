@@ -20,6 +20,7 @@ browser-friendly knowledge graph. It answers questions such as:
 - Is a connection a one-off accident or a repeated relationship?
 - Which weighted communities emerge, and which high-degree entities hold them together?
 - Is the paragraph context around a relationship mostly positive, neutral, or negative?
+- Whose explicitly attributed dialogue has the most positive emotional tone?
 
 The report is intentionally exploratory: search for an entity, toggle entity
 types, filter by encounter count or degree, colour the graph by community,
@@ -112,6 +113,22 @@ scores at or below `−0.05` negative, and the remainder neutral.
 In the committed extraction, all 642 relations are scored: 264 positive, 151
 neutral, and 227 negative. The mean compound context score is `0.011`.
 
+### “Who is the kindest?” estimate
+
+The extractor also finds quoted dialogue with an explicit nearby speech tag
+(`"…" said Hermione` or `Harry replied, "…"`), attributes it to a canonical
+character, and applies VADER to the quote. A character is eligible for the
+ranking after 30 attributed quotes:
+
+```text
+kindness score = (mean dialogue compound sentiment + 1) × 50
+```
+
+This maps VADER’s `−1…+1` range to `0…100`. In this extraction, **Dobby ranks
+first with 58.8/100**, based on 48 attributed quotes and 670 words. This is a
+language-positivity estimate, not an objective claim about moral character or a
+complete measure of everything said to a specific addressee.
+
 ## Run it
 
 The committed report has no build step or runtime dependencies:
@@ -173,6 +190,8 @@ current take-home avoids inventing metrics without a labelled gold set.
 ### Known limitations
 
 - Pronouns are not resolved; “he” does not create a Harry mention.
+- Dialogue without an explicit nearby speech tag is excluded, and multi-speaker
+  passages can still be misattributed.
 - A paragraph mentioning two entities does not prove direct interaction.
 - Ambiguous aliases can attach a mention to the wrong canonical entity.
 - Spell effects are curated metadata, not inferred from nearby prose.

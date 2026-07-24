@@ -15,6 +15,7 @@
     "communityCount": 8,
     "method": "case-insensitive gazetteer matching + paragraph co-occurrence",
     "sentimentMethod": "VADER 3.3.2 compound score over evidence paragraphs",
+    "speechMethod": "quoted dialogue attributed by nearby explicit speech tags; VADER mean; score=(mean+1)*50",
     "generatedFrom": "user-supplied local corpus"
   },
   "nodes": [
@@ -34,6 +35,13 @@
       "firstSeen": {
         "book": "Philosopher's Stone",
         "bookIndex": 1
+      },
+      "speech": {
+        "quotes": 3112,
+        "words": 22018,
+        "meanSentiment": 0.045,
+        "kindnessScore": 52.2,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 65,
       "weightedDegree": 12909,
@@ -56,6 +64,13 @@
         "book": "Philosopher's Stone",
         "bookIndex": 1
       },
+      "speech": {
+        "quotes": 1880,
+        "words": 14696,
+        "meanSentiment": 0.042,
+        "kindnessScore": 52.1,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 59,
       "weightedDegree": 6777,
       "community": 1
@@ -76,6 +91,13 @@
       "firstSeen": {
         "book": "Philosopher's Stone",
         "bookIndex": 1
+      },
+      "speech": {
+        "quotes": 1337,
+        "words": 12294,
+        "meanSentiment": 0.044,
+        "kindnessScore": 52.2,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 61,
       "weightedDegree": 6067,
@@ -98,6 +120,13 @@
         "book": "Philosopher's Stone",
         "bookIndex": 1
       },
+      "speech": {
+        "quotes": 838,
+        "words": 10544,
+        "meanSentiment": 0.111,
+        "kindnessScore": 55.6,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 49,
       "weightedDegree": 2875,
       "community": 2
@@ -118,6 +147,13 @@
       "firstSeen": {
         "book": "Philosopher's Stone",
         "bookIndex": 1
+      },
+      "speech": {
+        "quotes": 486,
+        "words": 4800,
+        "meanSentiment": 0.031,
+        "kindnessScore": 51.5,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 39,
       "weightedDegree": 1882,
@@ -140,6 +176,13 @@
         "book": "Philosopher's Stone",
         "bookIndex": 1
       },
+      "speech": {
+        "quotes": 266,
+        "words": 2748,
+        "meanSentiment": 0.036,
+        "kindnessScore": 51.8,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 47,
       "weightedDegree": 1734,
       "community": 2
@@ -160,6 +203,13 @@
       "firstSeen": {
         "book": "Philosopher's Stone",
         "bookIndex": 1
+      },
+      "speech": {
+        "quotes": 79,
+        "words": 726,
+        "meanSentiment": 0.09,
+        "kindnessScore": 54.5,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 41,
       "weightedDegree": 1374,
@@ -182,6 +232,13 @@
         "book": "Philosopher's Stone",
         "bookIndex": 1
       },
+      "speech": {
+        "quotes": 159,
+        "words": 1795,
+        "meanSentiment": 0.035,
+        "kindnessScore": 51.8,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 39,
       "weightedDegree": 1483,
       "community": 1
@@ -201,6 +258,13 @@
       "firstSeen": {
         "book": "Philosopher's Stone",
         "bookIndex": 1
+      },
+      "speech": {
+        "quotes": 66,
+        "words": 1067,
+        "meanSentiment": -0.005,
+        "kindnessScore": 49.8,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 39,
       "weightedDegree": 1375,
@@ -222,6 +286,13 @@
       "firstSeen": {
         "book": "Philosopher's Stone",
         "bookIndex": 1
+      },
+      "speech": {
+        "quotes": 246,
+        "words": 2098,
+        "meanSentiment": 0.091,
+        "kindnessScore": 54.5,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 32,
       "weightedDegree": 1364,
@@ -263,6 +334,13 @@
         "book": "Prisoner of Azkaban",
         "bookIndex": 3
       },
+      "speech": {
+        "quotes": 308,
+        "words": 3393,
+        "meanSentiment": 0.096,
+        "kindnessScore": 54.8,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 30,
       "weightedDegree": 777,
       "community": 2
@@ -283,6 +361,13 @@
       "firstSeen": {
         "book": "Philosopher's Stone",
         "bookIndex": 1
+      },
+      "speech": {
+        "quotes": 118,
+        "words": 1188,
+        "meanSentiment": 0.04,
+        "kindnessScore": 52.0,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 33,
       "weightedDegree": 1183,
@@ -305,6 +390,13 @@
         "book": "Philosopher's Stone",
         "bookIndex": 1
       },
+      "speech": {
+        "quotes": 171,
+        "words": 1587,
+        "meanSentiment": 0.068,
+        "kindnessScore": 53.4,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 31,
       "weightedDegree": 1253,
       "community": 3
@@ -325,6 +417,13 @@
       "firstSeen": {
         "book": "Philosopher's Stone",
         "bookIndex": 1
+      },
+      "speech": {
+        "quotes": 54,
+        "words": 390,
+        "meanSentiment": 0.006,
+        "kindnessScore": 50.3,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 33,
       "weightedDegree": 897,
@@ -347,6 +446,13 @@
         "book": "Philosopher's Stone",
         "bookIndex": 1
       },
+      "speech": {
+        "quotes": 216,
+        "words": 2616,
+        "meanSentiment": 0.052,
+        "kindnessScore": 52.6,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 31,
       "weightedDegree": 750,
       "community": 2
@@ -363,6 +469,13 @@
       "firstSeen": {
         "book": "Order of the Phoenix",
         "bookIndex": 5
+      },
+      "speech": {
+        "quotes": 4,
+        "words": 13,
+        "meanSentiment": 0.091,
+        "kindnessScore": 54.6,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 25,
       "weightedDegree": 668,
@@ -385,6 +498,13 @@
         "book": "Philosopher's Stone",
         "bookIndex": 1
       },
+      "speech": {
+        "quotes": 219,
+        "words": 2006,
+        "meanSentiment": 0.075,
+        "kindnessScore": 53.7,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 28,
       "weightedDegree": 536,
       "community": 3
@@ -406,6 +526,13 @@
         "book": "Philosopher's Stone",
         "bookIndex": 1
       },
+      "speech": {
+        "quotes": 188,
+        "words": 2030,
+        "meanSentiment": 0.142,
+        "kindnessScore": 57.1,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 25,
       "weightedDegree": 579,
       "community": 3
@@ -424,6 +551,13 @@
       "firstSeen": {
         "book": "Chamber of Secrets",
         "bookIndex": 2
+      },
+      "speech": {
+        "quotes": 48,
+        "words": 670,
+        "meanSentiment": 0.175,
+        "kindnessScore": 58.8,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 19,
       "weightedDegree": 367,
@@ -461,6 +595,13 @@
         "book": "Order of the Phoenix",
         "bookIndex": 5
       },
+      "speech": {
+        "quotes": 34,
+        "words": 355,
+        "meanSentiment": 0.126,
+        "kindnessScore": 56.3,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 19,
       "weightedDegree": 365,
       "community": 1
@@ -480,6 +621,13 @@
         "book": "Prisoner of Azkaban",
         "bookIndex": 3
       },
+      "speech": {
+        "quotes": 34,
+        "words": 218,
+        "meanSentiment": 0.062,
+        "kindnessScore": 53.1,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
+      },
       "degree": 21,
       "weightedDegree": 299,
       "community": 1
@@ -498,6 +646,13 @@
       "firstSeen": {
         "book": "Prisoner of Azkaban",
         "bookIndex": 3
+      },
+      "speech": {
+        "quotes": 21,
+        "words": 273,
+        "meanSentiment": -0.008,
+        "kindnessScore": 49.6,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 19,
       "weightedDegree": 303,
@@ -594,6 +749,13 @@
       "firstSeen": {
         "book": "Order of the Phoenix",
         "bookIndex": 5
+      },
+      "speech": {
+        "quotes": 16,
+        "words": 168,
+        "meanSentiment": 0.307,
+        "kindnessScore": 65.3,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 17,
       "weightedDegree": 185,
@@ -715,6 +877,13 @@
       "firstSeen": {
         "book": "Chamber of Secrets",
         "bookIndex": 2
+      },
+      "speech": {
+        "quotes": 2,
+        "words": 37,
+        "meanSentiment": 0.113,
+        "kindnessScore": 55.7,
+        "method": "VADER mean over dialogue with explicit nearby speaker tags"
       },
       "degree": 20,
       "weightedDegree": 208,

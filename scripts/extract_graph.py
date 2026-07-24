@@ -124,6 +124,39 @@ def sentiment_score(text: str) -> float:
     """Return VADER's normalised compound polarity in [-1, 1]."""
     return SENTIMENT_ANALYSER.polarity_scores(text)["compound"]
 
+SPEECH_VERBS = (
+    "said|asked|answered|replied|whispered|shouted|yelled|cried|muttered|"
+    "murmured|called|added|snapped|exclaimed|remarked|told|suggested"
+)
+
+def dialogue_attributions(paragraph: str, aliases: dict[str, list[str]]) -> list[tuple[str, str]]:
+    """Return (speaker, quote) pairs supported by a nearby explicit speech tag."""
+    alias_to_name = {
+        alias.lower().rstrip("."): name for name, values in aliases.items() for alias in values
+    }
+    alias_pattern = "|".join(
+        re.escape(alias) for alias in sorted(alias_to_name, key=len, reverse=True)
+    )
+    patterns = [
+        re.compile(rf"(?:{SPEECH_VERBS})\s+({alias_pattern})", re.I),
+        re.compile(rf"({alias_pattern})\s+(?:{SPEECH_VERBS})", re.I),
+    ]
+    results = []
+    for quote_match in re.finditer(r'["“]([^"”\n]{2,600})["”]', paragraph):
+        candidates = []
+        before = paragraph[max(0, quote_match.start() - 140):quote_match.start()]
+        after = paragraph[quote_match.end():quote_match.end() + 140]
+        # Prefer a tag after the quote, the dominant pattern in this corpus.
+        for priority, window in ((0, after), (1, before)):
+            for pattern in patterns:
+                for match in pattern.finditer(window):
+                    distance = match.start() if priority == 0 else len(window) - match.end()
+                    candidates.append((priority, distance, match.group(1)))
+        if candidates:
+            alias = min(candidates, key=lambda item: (item[0], item[1]))[2].lower().rstrip(".")
+            results.append((alias_to_name[alias], quote_match.group(1)))
+    return results
+
 def add_graph_metrics(nodes: list[dict], edges: list[dict]) -> None:
     """Add degree metrics and deterministic one-level Louvain communities."""
     adjacency = defaultdict(dict)
@@ -170,10 +203,12 @@ def extract(text: str) -> dict:
     if len(books) < 5:
         raise ValueError(f"Expected a multi-book corpus; detected only {len(books)} book(s).")
     patterns = {name: pattern_for(aliases) for group in ENTITIES.values() for name, aliases in group.items()}
+    character_aliases = ENTITIES["character"]
     entity_type = {name: kind for kind, group in ENTITIES.items() for name in group}
     mentions, book_counts, first_seen = Counter(), defaultdict(Counter), {}
     edge_counts, edge_books = Counter(), defaultdict(Counter)
     edge_sentiment, edge_sentiment_samples = Counter(), Counter()
+    speech_scores, speech_words = defaultdict(list), Counter()
 
     for book_index, (book, body) in enumerate(books, 1):
         for paragraph in re.split(r"\n\s*\n|\n", body):
@@ -190,6 +225,9 @@ def extract(text: str) -> dict:
             # paragraph co-occurrence: interpretable, bounded, and symmetric
             present = sorted(set(present))
             paragraph_sentiment = sentiment_score(paragraph)
+            for speaker, quote in dialogue_attributions(paragraph, character_aliases):
+                speech_scores[speaker].append(sentiment_score(quote))
+                speech_words[speaker] += len(re.findall(r"[A-Za-z]+", quote))
             for i, source in enumerate(present):
                 for target in present[i + 1:]:
                     key = (source, target)
@@ -202,6 +240,15 @@ def extract(text: str) -> dict:
     for name, count in mentions.most_common():
         node = {"id": name, "type": entity_type[name], "mentions": count,
                 "books": dict(book_counts[name]), "firstSeen": first_seen[name]}
+        if name in speech_scores:
+            mean_speech = sum(speech_scores[name]) / len(speech_scores[name])
+            node["speech"] = {
+                "quotes": len(speech_scores[name]),
+                "words": speech_words[name],
+                "meanSentiment": round(mean_speech, 3),
+                "kindnessScore": round((mean_speech + 1) * 50, 1),
+                "method": "VADER mean over dialogue with explicit nearby speaker tags",
+            }
         if name in SPELL_EFFECTS:
             node["effect"] = SPELL_EFFECTS[name]
         nodes.append(node)
@@ -228,6 +275,7 @@ def extract(text: str) -> dict:
                  "communityCount": len({node["community"] for node in nodes}),
                  "method": "case-insensitive gazetteer matching + paragraph co-occurrence",
                  "sentimentMethod": "VADER 3.3.2 compound score over evidence paragraphs",
+                 "speechMethod": "quoted dialogue attributed by nearby explicit speech tags; VADER mean; score=(mean+1)*50",
                  "generatedFrom": "user-supplied local corpus"},
         "nodes": nodes, "edges": edges,
     }
