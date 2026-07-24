@@ -29,7 +29,14 @@ function update(){
   if(!query){ids=new Set(visibleEdges.flatMap(e=>[e.source,e.target]));visibleNodes=data.nodes.filter(n=>filters[n.type]&&ids.has(n.id))}
   document.querySelector("#empty").style.display=visibleNodes.length?"none":"block"; draw();
 }
-function resize(){const r=canvas.getBoundingClientRect(),d=devicePixelRatio||1;canvas.width=r.width*d;canvas.height=r.height*d;ctx.setTransform(d,0,0,d,0,0)}
+function resize(){
+  const r=canvas.getBoundingClientRect(),d=devicePixelRatio||1;
+  const width=Math.round(r.width*d),height=Math.round(r.height*d);
+  if(canvas.width!==width||canvas.height!==height){
+    canvas.width=width;canvas.height=height;
+  }
+  ctx.setTransform(d,0,0,d,0,0);
+}
 function screen(n){const r=canvas.getBoundingClientRect();return{x:(n.x-450)*scale+r.width/2+pan.x,y:(n.y-300)*scale+r.height/2+pan.y}}
 function draw(){
   resize(); const selectedIds=new Set(selected.map(n=>n.id)), pathIds=new Set(window.pathIds||[]);
