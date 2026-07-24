@@ -104,7 +104,7 @@ gitignored: the repository distributes derived facts, not copyrighted prose.
 Run the lightweight checks with:
 
 ```bash
-python -m unittest discover -s tests
+python -m pytest
 ```
 
 ## Extraction approach: precision and recall
