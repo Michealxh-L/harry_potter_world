@@ -1,0 +1,13 @@
+.DS_Store
+__pycache__/
+.venv/
+data/book.txt
+node_clean/
+*.zip
+.pytest_cache/
+*.ipynb
+data/nodes_egdes_new.json
+data/community_all_fisrt10.json
+data/hogwarts_house.json
+data/cha_fandom_page.zip
+data/README.md

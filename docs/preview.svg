@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs><radialGradient id="g"><stop stop-color="#26352e"/><stop offset="1" stop-color="#101715"/></radialGradient></defs>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <circle cx="920" cy="310" r="220" fill="none" stroke="#c99b45" opacity=".25"/>
+  <g fill="#c99b45" opacity=".8">
+    <circle cx="840" cy="180" r="6"/><circle cx="1020" cy="245" r="9"/><circle cx="885" cy="370" r="13"/><circle cx="1080" cy="410" r="5"/>
+  </g>
+  <g stroke="#c99b45" opacity=".3"><path d="M840 180L1020 245 885 370 1080 410M840 180L885 370"/></g>
+  <text x="95" y="120" fill="#c99b45" font-family="monospace" font-size="16" letter-spacing="5">A COMPUTATIONAL READING</text>
+  <text x="90" y="275" fill="#f3f0e8" font-family="Georgia,serif" font-weight="bold" font-size="94">Potter Graph</text>
+  <text x="95" y="345" fill="#c99b45" font-family="Georgia,serif" font-style="italic" font-size="54">the wizarding world, connected.</text>
+  <text x="96" y="465" fill="#aeb8b2" font-family="Arial,sans-serif" font-size="21">72 ENTITIES  ·  642 RELATIONSHIPS  ·  7 BOOKS</text>
+</svg>

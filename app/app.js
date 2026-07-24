@@ -1,0 +1,79 @@
+const COLORS={character:"#a43a32",place:"#416b7d",spell:"#c99b45",creature:"#52715b",object:"#755d83"};
+const shortBook=t=>({"Philosopher's Stone":"PS","Chamber of Secrets":"CS","Prisoner of Azkaban":"PA","Goblet of Fire":"GF","Order of the Phoenix":"OP","Half-Blood Prince":"HBP","Deathly Hallows":"DH"}[t]);
+let data, visibleNodes=[], visibleEdges=[], selected=[], scale=1, pan={x:0,y:0}, drag=null, hovered=null;
+const canvas=document.querySelector("#graph"),ctx=canvas.getContext("2d"), filters={};
+
+fetch("data/graph.json").then(r=>r.json()).then(graph=>{
+  data=graph; document.querySelector("#stat-nodes").textContent=data.meta.entityCount;
+  document.querySelector("#stat-edges").textContent=data.meta.relationCount.toLocaleString();
+  buildFilters(); computeLayout(); update(); buildInsights();
+});
+function buildFilters(){
+  Object.keys(COLORS).forEach(type=>{filters[type]=true; document.querySelector("#filters").insertAdjacentHTML("beforeend",
+    `<label class="type-filter" style="--c:${COLORS[type]}"><input type="checkbox" data-type="${type}" checked><i></i>${type[0].toUpperCase()+type.slice(1)}</label>`)});
+  document.querySelectorAll("[data-type]").forEach(x=>x.onchange=()=>{filters[x.dataset.type]=x.checked;selected=[];update()});
+}
+function computeLayout(){
+  const W=900,H=600, byType={}; Object.keys(COLORS).forEach(t=>byType[t]=[]);
+  data.nodes.forEach(n=>byType[n.type].push(n));
+  const centers={character:[430,300],place:[680,210],spell:[690,430],creature:[210,440],object:[190,180]};
+  Object.entries(byType).forEach(([type,nodes])=>nodes.forEach((n,i)=>{
+    const a=i*2.399, r=18*Math.sqrt(i); n.x=centers[type][0]+Math.cos(a)*r; n.y=centers[type][1]+Math.sin(a)*r;
+  }));
+}
+function update(){
+  const min=+document.querySelector("#weight").value, query=document.querySelector("#search").value.toLowerCase();
+  visibleNodes=data.nodes.filter(n=>filters[n.type]&&(!query||n.id.toLowerCase().includes(query)));
+  let ids=new Set(visibleNodes.map(n=>n.id));
+  visibleEdges=data.edges.filter(e=>e.weight>=min&&ids.has(e.source)&&ids.has(e.target));
+  if(!query){ids=new Set(visibleEdges.flatMap(e=>[e.source,e.target]));visibleNodes=data.nodes.filter(n=>filters[n.type]&&ids.has(n.id))}
+  document.querySelector("#empty").style.display=visibleNodes.length?"none":"block"; draw();
+}
+function resize(){const r=canvas.getBoundingClientRect(),d=devicePixelRatio||1;canvas.width=r.width*d;canvas.height=r.height*d;ctx.setTransform(d,0,0,d,0,0)}
+function screen(n){const r=canvas.getBoundingClientRect();return{x:(n.x-450)*scale+r.width/2+pan.x,y:(n.y-300)*scale+r.height/2+pan.y}}
+function draw(){
+  resize(); const selectedIds=new Set(selected.map(n=>n.id)), pathIds=new Set(window.pathIds||[]);
+  ctx.clearRect(0,0,canvas.width,canvas.height); ctx.lineCap="round";
+  visibleEdges.forEach(e=>{const a=data.nodes.find(n=>n.id===e.source),b=data.nodes.find(n=>n.id===e.target),p=screen(a),q=screen(b);
+    const active=(selectedIds.has(a.id)||selectedIds.has(b.id)),onPath=pathIds.has(a.id)&&pathIds.has(b.id);
+    ctx.strokeStyle=onPath?"#c99b45":active?"#a43a3277":"#8a887a28";ctx.lineWidth=onPath?3:Math.min(4,.3+Math.sqrt(e.weight)*.25);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()});
+  visibleNodes.forEach(n=>{const p=screen(n),radius=Math.max(3,Math.min(12,2+Math.sqrt(n.mentions)*.14))*Math.sqrt(scale);
+    ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);ctx.fillStyle=COLORS[n.type];ctx.fill();
+    if(selectedIds.has(n.id)||pathIds.has(n.id)){ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke()}
+    if(radius>6||n===hovered||selectedIds.has(n.id)){ctx.font=`${n===hovered?600:500} 10px Manrope`;ctx.fillStyle="#25251f";ctx.fillText(n.id,p.x+radius+4,p.y+3)}
+  });
+}
+function nodeAt(x,y){return [...visibleNodes].reverse().find(n=>{const p=screen(n);return Math.hypot(x-p.x,y-p.y)<14})}
+canvas.onmousemove=e=>{const r=canvas.getBoundingClientRect();if(drag){pan.x+=e.clientX-drag.x;pan.y+=e.clientY-drag.y;drag={x:e.clientX,y:e.clientY};draw();return}hovered=nodeAt(e.clientX-r.left,e.clientY-r.top);canvas.style.cursor=hovered?"pointer":"grab";draw()};
+canvas.onmousedown=e=>drag={x:e.clientX,y:e.clientY}; canvas.onmouseup=e=>{const moved=Math.hypot(e.clientX-drag.x,e.clientY-drag.y);drag=null;if(moved<4&&hovered)selectNode(hovered)};
+canvas.onmouseleave=()=>drag=null;
+canvas.onwheel=e=>{e.preventDefault();scale=Math.max(.45,Math.min(2.5,scale*(e.deltaY>0?.9:1.1)));draw()};
+function selectNode(n){if(selected[0]?.id===n.id)selected=[];else if(selected.length<2)selected.push(n);else selected=[n];renderDetail(n);if(selected.length===2)findPath();else{window.pathIds=[];document.querySelector("#path-result").textContent=""}draw()}
+function renderDetail(n){
+ const edges=data.edges.filter(e=>e.source===n.id||e.target===n.id).sort((a,b)=>b.weight-a.weight).slice(0,5),max=Math.max(...Object.values(n.books));
+ document.querySelector("#detail").innerHTML=`<p class="eyebrow">Entity profile</p><span class="detail-type" style="color:${COLORS[n.type]}">${n.type}</span><h3>${n.id}</h3>${n.effect?`<p>${n.effect}</p>`:""}<div class="big-number">${n.mentions.toLocaleString()}</div><div class="big-label">total mentions</div><h4>Across the series</h4>${data.meta.books.map(b=>`<div class="book-row"><div><span>${shortBook(b)}</span><b>${n.books[b]||0}</b></div><i style="width:${(n.books[b]||0)/max*100}%"></i></div>`).join("")}<h4>Strongest links</h4><div class="connections">${edges.map(e=>`<div class="connection"><span>${e.source===n.id?e.target:e.source}</span><b>${e.weight}</b></div>`).join("")}</div>`;
+}
+function findPath(){
+ const [start,end]=selected.map(n=>n.id), adjacency={};visibleNodes.forEach(n=>adjacency[n.id]=[]);
+ visibleEdges.forEach(e=>{adjacency[e.source]?.push(e.target);adjacency[e.target]?.push(e.source)});
+ const q=[[start]],seen=new Set([start]);let found=null;
+ while(q.length){const p=q.shift(),last=p.at(-1);if(last===end){found=p;break}for(const x of adjacency[last]||[])if(!seen.has(x)){seen.add(x);q.push([...p,x])}}
+ window.pathIds=found||[];document.querySelector("#path-result").textContent=found?`Shortest path (${found.length-1} hops): ${found.join("  →  ")}`:"No path under the current filters.";draw();
+}
+function buildInsights(){
+ const bridge=[...data.nodes].filter(n=>n.type!=="character").sort((a,b)=>b.weightedDegree-a.weightedDegree)[0];
+ document.querySelector("#bridge-title").textContent=`${bridge.id} is the strongest non-human bridge.`;
+ document.querySelector("#bridge-copy").textContent=`With ${bridge.weightedDegree.toLocaleString()} weighted connections, it binds otherwise separate character circles together.`;
+ const top=[...data.nodes].sort((a,b)=>b.weightedDegree-a.weightedDegree).slice(0,5),mx=top[0].weightedDegree;
+ document.querySelector("#bridge-bars").innerHTML=top.map(n=>`<div class="bar"><div><span>${n.id}</span><b>${n.weightedDegree}</b></div><i style="width:${n.weightedDegree/mx*100}%"></i></div>`).join("");
+ const spells=data.nodes.filter(n=>n.type==="spell"), totals=data.meta.books.map(b=>spells.reduce((s,n)=>s+(n.books[b]||0),0)),sm=Math.max(...totals);
+ document.querySelector("#spell-chart").innerHTML=totals.map((v,i)=>`<div style="height:${v/sm*100}%"><span>${shortBook(data.meta.books[i])}</span></div>`).join("");
+ const pair=["Dobby","Lord Voldemort"];document.querySelector("#pair-title").textContent=`${pair[0]} and ${pair[1]} are only a few steps apart.`;
+ document.querySelector("#pair-copy").textContent="Use the graph’s path finder to see which shared narrative bridges connect two very different figures.";
+ document.querySelector("#show-pair").onclick=()=>{selected=pair.map(id=>data.nodes.find(n=>n.id===id));filters.character=true;document.querySelectorAll("[data-type]").forEach(x=>{x.checked=true;filters[x.dataset.type]=true});document.querySelector("#search").value="";update();findPath();renderDetail(selected[1]);location.hash="explore"};
+}
+document.querySelector("#search").oninput=update;document.querySelector("#weight").oninput=e=>{document.querySelector("#weight-output").textContent=e.target.value;selected=[];update()};
+document.querySelector("#all-types").onclick=()=>{document.querySelectorAll("[data-type]").forEach(x=>x.checked=filters[x.dataset.type]=true);update()};
+document.querySelector("#reset").onclick=()=>{scale=1;pan={x:0,y:0};selected=[];window.pathIds=[];update()};
+document.querySelector("#zoom-in").onclick=()=>{scale=Math.min(2.5,scale*1.2);draw()};document.querySelector("#zoom-out").onclick=()=>{scale=Math.max(.45,scale*.8);draw()};
+window.onresize=draw;

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="An interactive, evidence-backed graph of entities in the seven Harry Potter novels.">
+  <title>Potter Graph — the wizarding world, connected</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="#"><span>PG</span> Potter Graph</a>
+    <nav><a href="#explore">Explore</a><a href="#insights">Insights</a><a href="#method">Method</a></nav>
+    <a class="github" href="https://github.com/Michealxh-L/harry_potter_world">View source ↗</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">A computational reading of seven novels</p>
+      <h1>The wizarding world,<br><em>connected.</em></h1>
+      <p class="lede">Explore the people, places, spells, creatures and objects that share the page—and discover who bridges the story’s worlds.</p>
+      <div class="stats">
+        <div><strong id="stat-nodes">—</strong><span>entities</span></div>
+        <div><strong id="stat-edges">—</strong><span>relationships</span></div>
+        <div><strong>7</strong><span>books</span></div>
+      </div>
+      <a class="scroll" href="#explore">Enter the graph <b>↓</b></a>
+    </section>
+
+    <section id="explore" class="explore">
+      <div class="section-head">
+        <div><p class="eyebrow">01 / Explore</p><h2>Every mention leaves a trace.</h2></div>
+        <p>Each line joins entities that occur in the same paragraph. Thicker lines mean repeated encounters.</p>
+      </div>
+      <div class="workspace">
+        <aside>
+          <label for="search">Find an entity</label>
+          <div class="search-wrap"><input id="search" placeholder="Try “Dobby” or “Lumos”"><span>⌕</span></div>
+          <div class="filter-title">Entity types <button id="all-types">Show all</button></div>
+          <div id="filters"></div>
+          <div class="filter-title">Minimum encounters <output id="weight-output">2</output></div>
+          <input id="weight" type="range" min="2" max="20" value="2">
+          <div class="hint"><span>Tip</span> Select two nodes to reveal their shortest path.</div>
+        </aside>
+        <div class="graph-panel">
+          <canvas id="graph"></canvas>
+          <div class="graph-tools"><button id="reset" title="Reset view">⌂</button><button id="zoom-in">+</button><button id="zoom-out">−</button></div>
+          <div id="empty">No relationships match these filters.</div>
+        </div>
+        <aside id="detail" class="detail">
+          <p class="eyebrow">Entity profile</p>
+          <div class="empty-detail"><div class="orb">✦</div><h3>Select a node</h3><p>Click any entity to inspect its story, appearances and strongest relationships.</p></div>
+        </aside>
+      </div>
+      <div id="path-result" class="path-result"></div>
+    </section>
+
+    <section id="insights" class="insights">
+      <div class="section-head light">
+        <div><p class="eyebrow">02 / Insights</p><h2>What the network reveals.</h2></div>
+        <p>These observations are computed from the graph, not hand-picked anecdotes.</p>
+      </div>
+      <div class="insight-grid">
+        <article class="feature">
+          <span class="number">01</span><p class="tag">The bridge</p>
+          <h3 id="bridge-title">Loading…</h3>
+          <p id="bridge-copy"></p>
+          <div id="bridge-bars" class="bars"></div>
+        </article>
+        <article>
+          <span class="number">02</span><p class="tag">Spell signature</p>
+          <h3>The story’s spell vocabulary matures with Harry.</h3>
+          <p id="spell-copy">Early practical charms give way to defensive and unforgivable magic as the stakes rise.</p>
+          <div id="spell-chart" class="spark-chart"></div>
+        </article>
+        <article>
+          <span class="number">03</span><p class="tag">Hidden proximity</p>
+          <h3 id="pair-title">Finding an unexpected connection…</h3>
+          <p id="pair-copy"></p>
+          <button id="show-pair">Show in graph →</button>
+        </article>
+      </div>
+    </section>
+
+    <section id="method" class="method">
+      <div><p class="eyebrow">03 / Method</p><h2>Simple enough to trust.</h2></div>
+      <div class="method-steps">
+        <article><b>1</b><h3>Segment</h3><p>Detect book boundaries and scan paragraph-sized evidence windows.</p></article>
+        <article><b>2</b><h3>Recognise</h3><p>Match an auditable gazetteer with aliases and strict word boundaries.</p></article>
+        <article><b>3</b><h3>Connect</h3><p>Create a weighted edge when two entities share a paragraph at least twice.</p></article>
+        <article><b>4</b><h3>Interrogate</h3><p>Filter, compare timelines and traverse shortest paths in the browser.</p></article>
+      </div>
+      <p class="method-note">Transparent by design. Every weight can be reproduced from the local corpus; limitations and evaluation are documented in the README.</p>
+    </section>
+  </main>
+  <footer><span>Potter Graph · 2026</span><span>Built as an interpretive lens, not a canon.</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>
+
