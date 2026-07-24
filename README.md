@@ -4,7 +4,7 @@ An interactive, evidence-backed map of the characters, places, spells, creatures
 and objects in the seven Harry Potter novels.
 
 **[Open the report source](app/index.html)** ·
-**[Record video demo](docs/demo.mp4)**
+**[Video demo](docs/demo_new.mp4)**
 
 ![Potter Graph report preview](docs/preview.svg)
 
