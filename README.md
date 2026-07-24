@@ -23,8 +23,8 @@ browser-friendly knowledge graph. It answers questions such as:
 
 The report is intentionally exploratory: search for an entity, toggle entity
 types, filter by encounter count or degree, colour the graph by community,
-select a node for its profile, or select two nodes to compute their shortest
-path.
+select a character to inspect its one-to-four-hop neighbourhood, select a node
+for its profile, or select two nodes to compute their shortest path.
 
 ## A finding that surprised me
 
@@ -81,6 +81,13 @@ is intentionally modest: it means “narratively proximal,” not “friends,”
 “speaker,” or “caster.” The UI uses weighted degree for bridge rankings,
 one-level Louvain modularity optimisation for communities, and breadth-first
 search for shortest paths.
+
+“Distance” means unweighted shortest-path hop count. A direct neighbour has
+distance 1; a friend-of-a-friend has distance 2. The neighbourhood calculation
+respects the current minimum-encounter threshold, so raising that threshold can
+increase distances or disconnect nodes. The community legend names each
+Louvain community using its two highest-weighted-degree representatives; those
+names are descriptive labels, not manually assigned Hogwarts houses.
 
 Relationship sentiment is the average polarity of the paragraphs supporting an
 edge. A deliberately small, inspectable positive/negative lexicon produces a

@@ -45,11 +45,25 @@
           <input id="weight" type="range" min="2" max="20" value="2">
           <div class="filter-title">Minimum degree <output id="degree-output">0</output></div>
           <input id="degree" type="range" min="0" max="30" value="0">
+          <div class="filter-title">Character neighbourhood <button id="clear-distance">Clear</button></div>
+          <select id="distance-root" aria-label="Starting character">
+            <option value="">Choose a character…</option>
+          </select>
+          <div class="distance-row">
+            <label for="distance">Within</label>
+            <select id="distance" aria-label="Maximum hop distance">
+              <option value="1">1 hop</option>
+              <option value="2" selected>2 hops</option>
+              <option value="3">3 hops</option>
+              <option value="4">4 hops</option>
+            </select>
+          </div>
           <label class="mode-toggle"><input id="community-mode" type="checkbox"><span></span> Colour by community</label>
           <div class="hint"><span>Tip</span> Select two nodes to reveal their shortest path.</div>
         </aside>
         <div class="graph-panel">
           <canvas id="graph"></canvas>
+          <div id="community-legend" class="community-legend"></div>
           <div class="graph-tools"><button id="reset" title="Reset view">⌂</button><button id="zoom-in">+</button><button id="zoom-out">−</button></div>
           <div id="empty">No relationships match these filters.</div>
         </div>

@@ -13,6 +13,8 @@ function buildFilters(){
   Object.keys(COLORS).forEach(type=>{filters[type]=true; document.querySelector("#filters").insertAdjacentHTML("beforeend",
     `<label class="type-filter" style="--c:${COLORS[type]}"><input type="checkbox" data-type="${type}" checked><i></i>${type[0].toUpperCase()+type.slice(1)}</label>`)});
   document.querySelectorAll("[data-type]").forEach(x=>x.onchange=()=>{filters[x.dataset.type]=x.checked;selected=[];update()});
+  const people=data.nodes.filter(n=>n.type==="character").sort((a,b)=>a.id.localeCompare(b.id));
+  document.querySelector("#distance-root").insertAdjacentHTML("beforeend",people.map(n=>`<option value="${n.id}">${n.id}</option>`).join(""));
 }
 function computeLayout(){
   const W=900,H=600, byType={}; Object.keys(COLORS).forEach(t=>byType[t]=[]);
@@ -25,11 +27,24 @@ function computeLayout(){
 function update(){
   const min=+document.querySelector("#weight").value, minDegree=+document.querySelector("#degree").value;
   const query=document.querySelector("#search").value.toLowerCase();
-  visibleNodes=data.nodes.filter(n=>filters[n.type]&&(n.degree||0)>=minDegree&&(!query||n.id.toLowerCase().includes(query)));
+  const neighbourhood=neighbourhoodIds(min);
+  visibleNodes=data.nodes.filter(n=>filters[n.type]&&(n.degree||0)>=minDegree&&
+    (!neighbourhood||neighbourhood.has(n.id))&&(!query||n.id.toLowerCase().includes(query)));
   let ids=new Set(visibleNodes.map(n=>n.id));
   visibleEdges=data.edges.filter(e=>e.weight>=min&&ids.has(e.source)&&ids.has(e.target));
-  if(!query){ids=new Set(visibleEdges.flatMap(e=>[e.source,e.target]));visibleNodes=data.nodes.filter(n=>filters[n.type]&&(n.degree||0)>=minDegree&&ids.has(n.id))}
+  if(!query){ids=new Set(visibleEdges.flatMap(e=>[e.source,e.target]));const root=document.querySelector("#distance-root").value;if(root)ids.add(root);visibleNodes=data.nodes.filter(n=>filters[n.type]&&(n.degree||0)>=minDegree&&(!neighbourhood||neighbourhood.has(n.id))&&ids.has(n.id))}
   document.querySelector("#empty").style.display=visibleNodes.length?"none":"block"; draw();
+}
+function neighbourhoodIds(minWeight){
+  const root=document.querySelector("#distance-root").value;
+  if(!root)return null;
+  const limit=+document.querySelector("#distance").value,adjacency={};
+  data.nodes.forEach(n=>adjacency[n.id]=[]);
+  data.edges.filter(e=>e.weight>=minWeight).forEach(e=>{adjacency[e.source].push(e.target);adjacency[e.target].push(e.source)});
+  const distance=new Map([[root,0]]),queue=[root];
+  while(queue.length){const current=queue.shift(),nextDistance=distance.get(current)+1;if(nextDistance>limit)continue;
+    for(const next of adjacency[current])if(!distance.has(next)){distance.set(next,nextDistance);queue.push(next)}}
+  return new Set(distance.keys());
 }
 function resize(){
   const r=canvas.getBoundingClientRect(),d=devicePixelRatio||1;
@@ -52,6 +67,17 @@ function draw(){
     if(selectedIds.has(n.id)||pathIds.has(n.id)){ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke()}
     if(radius>6||n===hovered||selectedIds.has(n.id)){ctx.font=`${n===hovered?600:500} 10px Manrope`;ctx.fillStyle="#25251f";ctx.fillText(n.id,p.x+radius+4,p.y+3)}
   });
+  renderCommunityLegend(communityMode);
+}
+function renderCommunityLegend(show){
+  const legend=document.querySelector("#community-legend");
+  legend.classList.toggle("visible",show);
+  if(!show)return;
+  const groups={};
+  data.nodes.forEach(n=>(groups[n.community]??=[]).push(n));
+  legend.innerHTML=`<b>LOUVAIN COMMUNITIES</b>${Object.entries(groups).sort((a,b)=>a[0]-b[0]).map(([id,nodes])=>{
+    const leaders=[...nodes].sort((a,b)=>b.weightedDegree-a.weightedDegree).slice(0,2).map(n=>n.id.split(" ").at(-1)).join(" / ");
+    return `<div title="${nodes.map(n=>n.id).join(", ")}"><i style="background:${COMMUNITY_COLORS[(id-1)%COMMUNITY_COLORS.length]}"></i>C${id} · ${leaders} (${nodes.length})</div>`}).join("")}`;
 }
 function nodeAt(x,y){return [...visibleNodes].reverse().find(n=>{const p=screen(n);return Math.hypot(x-p.x,y-p.y)<14})}
 canvas.onmousemove=e=>{const r=canvas.getBoundingClientRect();if(drag){pan.x+=e.clientX-drag.x;pan.y+=e.clientY-drag.y;drag={x:e.clientX,y:e.clientY};draw();return}hovered=nodeAt(e.clientX-r.left,e.clientY-r.top);canvas.style.cursor=hovered?"pointer":"grab";draw()};
@@ -85,7 +111,10 @@ function buildInsights(){
 document.querySelector("#search").oninput=update;document.querySelector("#weight").oninput=e=>{document.querySelector("#weight-output").textContent=e.target.value;selected=[];update()};
 document.querySelector("#degree").oninput=e=>{document.querySelector("#degree-output").textContent=e.target.value;selected=[];update()};
 document.querySelector("#community-mode").onchange=draw;
+document.querySelector("#distance-root").onchange=e=>{selected=[];window.pathIds=[];if(e.target.value){const node=data.nodes.find(n=>n.id===e.target.value);selected=[node];renderDetail(node)}update()};
+document.querySelector("#distance").onchange=update;
+document.querySelector("#clear-distance").onclick=()=>{document.querySelector("#distance-root").value="";selected=[];window.pathIds=[];document.querySelector("#path-result").textContent="";update()};
 document.querySelector("#all-types").onclick=()=>{document.querySelectorAll("[data-type]").forEach(x=>x.checked=filters[x.dataset.type]=true);update()};
-document.querySelector("#reset").onclick=()=>{scale=1;pan={x:0,y:0};selected=[];window.pathIds=[];update()};
+document.querySelector("#reset").onclick=()=>{scale=1;pan={x:0,y:0};selected=[];window.pathIds=[];document.querySelector("#distance-root").value="";document.querySelector("#search").value="";update()};
 document.querySelector("#zoom-in").onclick=()=>{scale=Math.min(2.5,scale*1.2);draw()};document.querySelector("#zoom-out").onclick=()=>{scale=Math.max(.45,scale*.8);draw()};
 window.onresize=draw;
